@@ -1,0 +1,22 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.6.xsd">
+
+    <changeSet id="update_data" author="maohw">
+        <sql>
+            INSERT INTO t_sys_user (id, name, password) VALUES (1, '张三', '123456');
+            INSERT INTO t_sys_user (id, name, password) VALUES (2, '李四', '123456');
+        </sql>
+        <!-- rollback语句，在执行rollback时会进行调用 -->
+        <rollback>
+            <sql>
+                DELETE FROM t_sys_user WHERE id=1;
+                DELETE FROM t_sys_user WHERE id=2;
+            </sql>
+        </rollback>
+    </changeSet>
+
+
+</databaseChangeLog>

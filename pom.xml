@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.dalomao</groupId>
+    <artifactId>dalomao-liquibase</artifactId>
+    <version>1.0.0</version>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>3.6.3</version>
+        </dependency>
+        <dependency>
+            <groupId>ant</groupId>
+            <artifactId>ant</artifactId>
+            <version>1.7.0</version>
+        </dependency>
+        <dependency>
+            <groupId>ant-contrib</groupId>
+            <artifactId>ant-contrib</artifactId>
+            <version>1.0b3</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>ant</artifactId>
+                    <groupId>ant</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>9.0-801.jdbc4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.30</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>dalomao-liquibase</finalName>
+
+        <!-- 指定资源文件 -->
+        <resources>
+            <resource>
+                <filtering>false</filtering>
+                <!-- 根目录 -->
+                <directory>.</directory>
+                <!-- 包含的资源文件 -->
+                <includes>
+                    <include>config/**</include>
+                    <include>prod.data/**</include>
+                    <include>build.xml</include>
+                </includes>
+            </resource>
+        </resources>
+
+        <plugins>
+            <plugin>
+                <artifactId>maven-clean-plugin</artifactId>
+                <version>2.5</version>
+                <configuration>
+                    <filesets>
+                        <fileset>
+                            <directory>target/</directory>
+                            <includes>
+                                <include>**</include>
+                            </includes>
+                            <followSymlinks>false</followSymlinks>
+                        </fileset>
+                    </filesets>
+                </configuration>
+            </plugin>
+
+            <!--
+                maven-dependency-plugin使用场景：
+                1.需要某个特殊的jar包，但是又不能直接通过maven依赖获取，或者说在其他环境的maven仓库内不存在，那么如何将我们所需要的jar包打入我们的生产jar包中。
+                2.某个jar包内部包含的文件是我们所需要的，或者是我们希望将它提取出来放入指定的位置 ，那么除了复制粘贴，如何通过maven插件实现呢
+                dependency 插件最常用到的是 dependency:copy  dependency:copy-dependencies  dependency:unpack  dependency:unpack-dependencies 这四个
+            -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <!-- 拷贝依赖包到target/classes/m2_repo目录下，并排除一些jar包 -->
+                            <excludeGroupIds>org.springframework,junit,org.mockito,org.objenesis,org.hamcrest</excludeGroupIds>
+                            <outputDirectory>target/classes/m2_repo</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--
+                maven-antrun-plugin：方便从Ant基础项目迁移到Maven
+            -->
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <!-- Maven处于编译阶段执行该插件 -->
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <!-- 将指定的配置文件移动到指定目录并重命名 -->
+                        <configuration>
+                            <tasks>
+                                <move file="${project.build.directory}/classes/config/${environmentProperties}" tofile="${project.build.directory}/classes/dbmigration.properties" />
+                            </tasks>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+    <profiles>
+        <profile>
+            <!-- 开发环境为windows系统将生效 -->
+            <id>dev-windows</id>
+            <activation>
+                <os>
+                    <family>windows</family>
+                </os>
+            </activation>
+            <properties>
+                <!-- 环境配置文件 -->
+                <environmentProperties>01_local.properties</environmentProperties>
+            </properties>
+        </profile>
+
+        <profile>
+            <!-- 开发环境为mac系统将生效 -->
+            <id>dev-mac</id>
+            <activation>
+                <os>
+                    <family>mac</family>
+                </os>
+            </activation>
+            <properties>
+                <!-- 环境配置文件 -->
+                <environmentProperties>01_local.properties</environmentProperties>
+            </properties>
+        </profile>
+
+        <profile>
+            <id>package</id>
+            <properties>
+                <!-- 环境配置文件(参数方式: -DenvironmentProperties=02_test.properties ) -->
+                <environmentProperties>xxx.properties</environmentProperties>
+            </properties>
+        </profile>
+    </profiles>
+</project>

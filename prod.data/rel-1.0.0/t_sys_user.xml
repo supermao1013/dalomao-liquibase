@@ -1,0 +1,22 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.6.xsd">
+
+    <changeSet id="create_table" author="maohw">
+        <createTable tableName="t_sys_user" remarks="系统模块-用户表">
+            <column name="id" type="bigint(20)" remarks="主键">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="varchar(20)" remarks="用户名称" />
+            <column name="password" type="varchar(20)" remarks="用户密码" />
+        </createTable>
+        <!-- 建表语句会自动rollback，但建议还是写上rollback，可控 -->
+        <rollback>
+            <dropTable tableName="t_sys_user" />
+        </rollback>
+    </changeSet>
+
+
+</databaseChangeLog>

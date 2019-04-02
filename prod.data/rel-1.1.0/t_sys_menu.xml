@@ -1,0 +1,30 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.6.xsd">
+
+    <changeSet id="update_data" author="maohw">
+        <insert tableName="t_sys_menu">
+            <column name="id" value="1"/>
+            <column name="name" value="系统管理"/>
+            <column name="url" value="/sys.html"/>
+        </insert>
+        <insert tableName="t_sys_menu">
+            <column name="id" value="2"/>
+            <column name="name" value="菜单管理"/>
+            <column name="url" value="/menu.html"/>
+        </insert>
+        <!-- rollback语句，在执行rollback时会进行调用 -->
+        <rollback>
+            <sql>
+                DELETE FROM t_sys_menu WHERE id=1;
+                DELETE FROM t_sys_menu WHERE id=2;
+            </sql>
+        </rollback>
+    </changeSet>
+
+
+
+
+</databaseChangeLog>

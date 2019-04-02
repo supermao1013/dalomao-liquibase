@@ -1,0 +1,164 @@
+<!--
+    一个脚本相当于一个project
+    name：用于指定 project 元素的名称
+    default：用于指定 project 默认执行时所执行的 target 的名称
+    basedir：用于指定基路径的位置。该属性没有指定时，使用 build.xml的目录作为基准目录
+ -->
+<project name="liquibase-demo" basedir="." default="">
+
+    <!--
+        property：Ant中的属性变量，在每个任务中通过${属性名}访问
+
+        Ant 还提供了一些它自己的内置属性：
+        basedir： project 基目录的绝对路径；
+        ant.file： buildfile的绝对路径；
+        ant.version： Ant 的版本信息；
+        ant.project.name： 当前指定的project的名字；
+        ant.java.version： Ant 检测到的JDK版本
+    -->
+    <property name="target.dir" value="${basedir}/target"/>
+    <property name="target.classes.dir" value="${target.dir}/classes"/>
+    <property name="resources.dir" value="${basedir}"/>
+    <property name="M2_REPO" value="${basedir}/m2_repo"/>
+
+    <!--
+        tstamp定义时间戳格式
+        <tstamp/>默认会提供三个变量
+        TODAY：以"MMMM dd yyyy"的形式输出时间，表示年月日，如"May 25 2013"
+        DSTAMP：以"yyyyMMdd"的形式输出时间，表示年月日，如"20130525"
+        TSTAMP：以"hhmm"的形式输出时间，表示小时分钟，如"1039"
+     -->
+    <!--<tstamp/>-->
+    <!--<target name="init">-->
+        <!--<echo message="${TODAY}" />-->
+        <!--<echo message="${DSTAMP}" />-->
+        <!--<echo message="${TSTAMP}" />-->
+    <!--</target>-->
+
+    <!-- 自定义时间戳格式 -->
+    <tstamp>
+        <format property="current.date.stamp" pattern="yyyy-MM-dd hh:mm:ss"/>
+    </tstamp>
+    <!--<target name="init">-->
+        <!--<echo message="${current.date.stamp}" />-->
+    <!--</target>-->
+
+    <!-- path：用于表示一个类路径，除此之外还可以表示其他的路径，这里指定jar包文件 -->
+    <path id="classpath">
+        <!-- 文件集合 -->
+        <fileset dir="${M2_REPO}" casesensitive="false">
+            <include name="*.jar"/>
+        </fileset>
+    </path>
+    <!-- 加载指定jar中的properties文件 -->
+    <taskdef resource="liquibase/integration/ant/antlib.xml">
+        <classpath refid="classpath"/>
+    </taskdef>
+
+    <!-- target：定义任务，这里是删除target目录 -->
+    <target name="clean" description="clean">
+        <!-- 对文件或目录进行删除 -->
+        <delete dir="${target.dir}"/>
+    </target>
+
+    <!-- depends：依赖于clean任务，会先执行clean.target -->
+    <target name="prepare" depends="clean" description="prepare">
+        <!-- 加载配置文件 -->
+        <property file="${resources.dir}/dbmigration.properties"/>
+
+        <!-- 将指定文件或目录拷贝到target.classes.dir，这里是将所有的本地资源文件拷贝到target.classes目录下 -->
+        <copy flatten="false" todir="${target.classes.dir}" filtering="true"
+              encoding="UTF8" outputencoding="UTF8" overwrite="true">
+            <!-- fileset：定义了一组过滤器，这些过滤器将在文件移动或复制时完成文件的文本替换 -->
+            <!-- includes指定所有文件，excludes指定排除的文件 -->
+            <fileset dir="${resources.dir}" includes="**/*" excludes="pom.xml,*.svn,*.iml,.idea/**"/>
+        </copy>
+
+        <!-- 打印日志 -->
+        <echo message="driver=${driver}"/>
+        <echo message="url=${url}"/>
+        <echo message="username=${username}"/>
+        <echo message="password=${password}"/>
+    </target>
+
+    <!-- 生成当前还未升级的sql语句
+    <target name="generate.sql.db" depends="prepare">
+        <antcall target="sql-db-rel" />
+    </target>-->
+
+    <!-- 升级任务 -->
+    <target name="upgrade.db" depends="prepare">
+        <antcall target="db-rel" />
+    </target>
+
+    <!-- 回滚任务 -->
+    <target name="rollback.db" depends="prepare">
+        <antcall target="rollback-db-rel" />
+    </target>
+
+    <!-- 升级 -->
+    <macrodef name="updateDb">
+        <!-- attribute：定义外部传进来的参数 -->
+        <attribute name="script.dir"/>
+        <attribute name="dropFirst" default="false"/>
+        <attribute name="tagVersion" />
+
+        <!-- sequential是Ant内置任务，用于包含其他的ant任务，sequential是一个容器任务。嵌套的任务按照顺序执行，sequential的主要用途是支持在并行任务中顺序执行一个子集中的任务 -->
+        <sequential>
+            <database id="my-database" driver="${driver}" url="${url}" user="${username}" password="${password}"/>
+            <echo message="Excute script: @{script.dir}"/>
+            <!--打tag，用于回滚-->
+            <tagDatabase tag="@{tagVersion}" databaseref="my-database" />
+            <updateDatabase databaseref="my-database"
+                            changeLogFile="@{script.dir}/script_suite.xml"
+                            dropFirst="@{dropFirst}" promptOnNonLocalDatabase="false" classpathref="classpath"/>
+        </sequential>
+    </macrodef>
+
+    <!-- 回滚 -->
+    <macrodef name="rollbackDb">
+        <attribute name="script.dir"/>
+        <attribute name="tagVersion" />
+
+        <sequential>
+            <database id="my-database" driver="${driver}" url="${url}" user="${username}" password="${password}"/>
+            <echo message="Excute rollback, tag version:@{tagVersion}"/>
+            <rollbackDatabase  databaseref="my-database"
+                    rollbacktag="@{tagVersion}" changelogfile="@{script.dir}/script_suite.xml"/>
+        </sequential>
+    </macrodef>
+
+    <!--生成update sql
+    <macrodef name="updateDbGenerateSQL">
+        <attribute name="script.dir"/>
+        <attribute name="dropFirst" default="false"/>
+        <sequential>
+            <database id="my-database" driver="${driver}" url="${url}" user="${username}" password="${password}"/>
+            <echo message="Excute script: @{script.dir}"/>
+            <updateDatabase databaseref="my-database"
+                            changeLogFile="@{script.dir}/script_suite.xml"
+                            dropFirst="@{dropFirst}" promptOnNonLocalDatabase="false" classpathref="classpath" outputfile="@{script.dir}/update.sql" />
+        </sequential>
+    </macrodef>-->
+
+    <!-- 生成当前还未升级的sql语句
+    <target name="sql-db-rel">
+        <updateDbGenerateSQL script.dir="${target.classes.dir}/prod.data/rel-1.0.0" dropfirst="false"/>
+        <updateDbGenerateSQL script.dir="${target.classes.dir}/prod.data/rel-1.1.0" dropfirst="false"/>
+    </target>-->
+
+    <!-- 升级脚本可以一直加，执行过的则不会再执行 -->
+    <target name="db-rel">
+        <updateDb script.dir="${target.classes.dir}/prod.data/rel-1.0.0" dropfirst="false" tagVersion="1.0.0"/>
+        <updateDb script.dir="${target.classes.dir}/prod.data/rel-1.1.0" dropfirst="false" tagVersion="1.1.0"/>
+    </target>
+
+    <!-- 回退脚本，实际生产环境只要配置当前version即可 -->
+    <!-- 若要配置多个，则按版本号由近及远进行配置，按顺序回退到最初的版本 -->
+    <target name="rollback-db-rel">
+        <rollbackDb script.dir="${target.classes.dir}/prod.data/rel-1.1.0" tagVersion="1.1.0"/>
+        <!--<rollbackDb script.dir="${target.classes.dir}/prod.data/rel-1.0.0" tagVersion="1.0.0"/>-->
+    </target>
+
+
+</project>
