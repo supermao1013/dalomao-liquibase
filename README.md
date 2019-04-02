@@ -46,6 +46,7 @@
 
 * 以上步骤做完以后，还需要在build.xml中处理两个事项
     > 1.在db-rel升级任务中纳入升级脚本，script.dir为本次升级的脚本路径，tagVersion为本次升级的版本号（改版本号在回退时会用到），<font color=red>**升级脚本可以一直加，执行过的则不会再执行**</font>
+    
     > 2.在rollback-db-rel回退任务中纳入本次回退脚本，script.dir为本次回退的脚本路径，tagVersion为本次回退的版本号，<font color=red>**回退任务在实际生产环境只要配置当前version的任务即可**</font>
 
 * 使用Ant运行build.xml中的任务，主要是两个任务：upgrade.db表示升级任务、rollback.db表示回退任务
@@ -57,8 +58,11 @@
 	其中xxx.properties对应不同的环境，请自行更改，每个环境对应的配置文件如下：
 
     > <font color=blue>**01_local.properties：本地开发环境**</font>
+    
     > <font color=blue>**02_test.properties：测试环境**</font>
+    
     > <font color=blue>**03_uat.properties：预发布环境**</font>
+    
     > <font color=blue>**04_prd.properties：生产环境**</font>
 
 * 在CentOS环境安装ant，安装教程可以参考：[https://blog.csdn.net/supermao1013/article/details/88863212](https://blog.csdn.net/supermao1013/article/details/88863212 "Ant环境安装（Windows10+CentOS7）")
@@ -68,6 +72,7 @@
 * 进入dalomao-liqubase目录执行
     
 	> <font color=blue>**升级命令：ant upgrade.db**</font>
+	
     > <font color=blue>**回退命令：ant rollback.db**</font>
 
 * 打包和执行脚本可以参看：pack_by_maven.sh
