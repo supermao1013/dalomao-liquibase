@@ -87,6 +87,11 @@
 
 ## 相关截图
 
+![项目目录结构说明](https://github.com/supermao1013/all-images/blob/master/dalomao-liquibase/%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84%E8%AF%B4%E6%98%8E.png)
+
+![changelog划分](https://github.com/supermao1013/all-images/blob/master/dalomao-liquibase/changelog%E5%88%92%E5%88%86.png)
+
+![Ant任务说明](https://github.com/supermao1013/all-images/blob/master/dalomao-liquibase/Ant%E4%BB%BB%E5%8A%A1%E8%AF%B4%E6%98%8E.png)
 
 ## 参考
 
