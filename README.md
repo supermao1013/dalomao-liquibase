@@ -93,6 +93,12 @@
 
 ![Ant任务说明](https://github.com/supermao1013/all-images/blob/master/dalomao-liquibase/Ant%E4%BB%BB%E5%8A%A1%E8%AF%B4%E6%98%8E.png)
 
+![script_suite文件](https://github.com/supermao1013/all-images/blob/master/dalomao-liquibase/script_suite%E6%96%87%E4%BB%B6.png)
+
+![changelog1](https://github.com/supermao1013/all-images/blob/master/dalomao-liquibase/changelog1.png)
+
+![changelog2](https://github.com/supermao1013/all-images/blob/master/dalomao-liquibase/changelog2.png)
+
 ## 参考
 
 Liqubase教程：https://www.liquibase.org/documentation/index.html
